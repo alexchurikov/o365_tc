@@ -34,23 +34,20 @@ def login_to_cp(cpurl, username, password):
     click_xpath("//button[@name='login']")
     driver.maximize_window()
 
-def switch_to_billing():
+def switch_panel(needed_panel_name): # "Billing" or "Operations"
     sleep(DELAY)
     driver.switch_to.frame("topFrame")
     panelName = driver.find_element_by_id("to_bm") #find <a> element
 
-    if panelName.text == "Billing":
+    if panelName.text == needed_panel_name:
         panelName.click()
-
-def wait_for_element(time, location):
-    print "nothing"
 
 def create_customer(company_name, country_code, state, zip, additional_parameters, login, password):
     print "Creating customer with name: ", company_name
 
     win = driver.current_window_handle
 
-    switch_to_billing()
+    switch_panel("Billing")
 
     driver.switch_to.window(win) # otherwise selenium doesn't see the frame
     driver.switch_to.frame("leftFrame")
