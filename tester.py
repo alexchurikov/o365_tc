@@ -46,10 +46,12 @@ def wait_for_element(time, location):
     print "nothing"
 
 def create_customer(company_name, country_code, state, zip, additional_parameters, login, password):
+    print "Creating customer with name: ", company_name
+
     win = driver.current_window_handle
 
     switch_to_billing()
-    #wait?
+
     driver.switch_to.window(win) # otherwise selenium doesn't see the frame
     driver.switch_to.frame("leftFrame")
 
@@ -93,8 +95,39 @@ def create_customer(company_name, country_code, state, zip, additional_parameter
 
     click_id("input___SP_ViewAccount")
 
+    result = driver.find_element_by_id("opresult_id").find_element_by_class_name("msg-content").text
     print "Customer creation result:"
-    print driver.find_element_by_id("opresult_id").find_element_by_class_name("msg-content").text
+    print result
+
+    return result
+
+def find_in_popup(field_element_id, value):
+#switch to popup here, as in Dasha
+    fill_text_by_id(field_element_id, value)
+    click_id("_browse_search")
+#implement here the algorithm from Dasha
+# it should support cases with multiple found elements
+
+def place_order(customerID, planName, subdomain):
+    print "Placing order for customer with ID ",customerID,", purchasing plan '",planName,"'"
+
+    win = driver.current_window_handle
+
+    switch_to_billing()
+
+    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
+    driver.switch_to.frame("leftFrame")
+
+    click_id("click_orders")
+
+    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
+    driver.switch_to.frame("mainFrame")
+    click_id("input___add")
+
+    # filling fields
+    fill_text_by_id("input___AccountAccountID",customerID)
+    click_id("input___refPlan")
+    find_in_popup("filter_name", planName)
 
 ####################### MAIN ######################
 
@@ -105,6 +138,11 @@ username = "admin"
 #password = "123qweASD"
 password = "oap-psteam"
 
+country = "us" # must the one where the Provider can sell Office 365 services
+state = "AK" # if required
+additional_params = ["111111111"] # depends on what is requested on the installation
+
+#=====================Actions=======================
 # Open browser
 #mydriver = webdriver.Firefox() - fails too often = finishes with exit code 0, but doesn't do anything
 driver = webdriver.Chrome(executable_path="..\chromedriver.exe")
@@ -112,6 +150,13 @@ driver.implicitly_wait(10)
 
 # Action 1
 login_to_cp(cpurl, username, password)
-additional_params = ["111111111"]
-create_customer("Test Customer PS2", "us", "AK", "12345", additional_params, "testps2", "123qweASD")
 
+#result = create_customer("Test Customer PS2", country, state, "12345", additional_params, "testps2", "123qweASD")
+result = "Account #1000020 has been created."
+message = str(result)
+if not message.endswith("has been created."):
+    exit(1)
+customerID = message.rstrip(" has been created.")
+customerID = customerID.strip("Account #")
+#place_order(customerID, "Office 365 Enterprise E1", "pstest1.onmicrosoft.com")
+place_order(customerID, "IIS Hosting", "pstest1.onmicrosoft.com")
