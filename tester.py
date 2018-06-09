@@ -8,6 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException, NoSuchFrameException
 
+DELAY = 0.9
+
 
 def fill_text_xpath (location, text):
     element = driver.find_element_by_xpath(location)
@@ -33,11 +35,9 @@ def login_to_cp(cpurl, username, password):
     driver.maximize_window()
 
 def switch_to_billing():
-    sleep(0.9)
+    sleep(DELAY)
     driver.switch_to.frame("topFrame")
-    panelName = driver.find_element_by_id("to_bm") #find a element
-    #print "Title is: " + panelName.get_attribute("title")
-    print "Text is: " + panelName.text
+    panelName = driver.find_element_by_id("to_bm") #find <a> element
 
     if panelName.text == "Billing":
         panelName.click()
@@ -45,33 +45,17 @@ def switch_to_billing():
 def wait_for_element(time, location):
     print "nothing"
 
-def create_customer(company_name, country_code, state, zip):
+def create_customer(company_name, country_code, state, zip, additional_parameters, login, password):
     win = driver.current_window_handle
 
     switch_to_billing()
-    found = 10
-#clean this!
-    for i in range(0, 10):
-        sleep(1)
-        print "Tick"
-        try:
-            driver.switch_to.window(win)
-            found = 1
-            print "found window"
-            driver.switch_to.frame("leftFrame")
-            found = 2
-            print "found leftFrame"
-            break
-        except NoSuchFrameException:
-            found = 0
-            continue
-
-    #if found == 0:
-    print "Found =", found
+    #wait?
+    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
+    driver.switch_to.frame("leftFrame")
 
     click_id("click_my_end_user_accounts")
 
-    driver.switch_to.window(win)
+    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
     driver.switch_to.frame("mainFrame")
     click_id("input_____customer_add")
     click_id("input___Save")
@@ -89,12 +73,37 @@ def create_customer(company_name, country_code, state, zip):
     fill_text_by_id("input___AdminPhNumber", "4567890")
     click_id("input___Save")
 
+    # Additional parameters
+    additional_information_elements = driver.find_element_by_id('Additional Information').find_elements_by_tag_name("input")
+
+    num_of_params = len(additional_parameters)
+    num_of_fields = len(additional_information_elements)
+
+    if num_of_params != num_of_fields:
+        print "Customer creation error: Number of specified additional parameters(",num_of_params,") is not equal to the number of fields on the page(",num_of_fields,")"
+        exit(1)
+    else:
+        for i in {0, num_of_params-1}:
+            additional_information_elements[i].send_keys(additional_parameters[i])
+
+    click_id("input___Next")
+
+    fill_text_by_id("input___Login",login)
+    fill_text_by_id("input___Password", password)
+
+    click_id("input___SP_ViewAccount")
+
+    print "Customer creation result:"
+    print driver.find_element_by_id("opresult_id").find_element_by_class_name("msg-content").text
+
 ####################### MAIN ######################
 
 #=====================variables=======================
-cpurl = "https://di.psteam.int.zone/cp"
+#cpurl = "https://di.psteam.int.zone/cp"
+cpurl = "https://oap.psteam.int.zone/cp"
 username = "admin"
-password = "123qweASD"
+#password = "123qweASD"
+password = "oap-psteam"
 
 # Open browser
 #mydriver = webdriver.Firefox() - fails too often = finishes with exit code 0, but doesn't do anything
@@ -103,5 +112,6 @@ driver.implicitly_wait(10)
 
 # Action 1
 login_to_cp(cpurl, username, password)
-create_customer("Test Customer PS1", "us", "AK", "12345")
+additional_params = ["111111111"]
+create_customer("Test Customer PS2", "us", "AK", "12345", additional_params, "testps2", "123qweASD")
 
