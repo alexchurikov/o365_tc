@@ -2,6 +2,7 @@
 #---------------------
 from selenium import webdriver
 from time import sleep
+import sys
 
 #Following are optional required
 from selenium.webdriver.common.by import By
@@ -79,8 +80,8 @@ def create_customer(company_name, country_code, state, zip, additional_parameter
     num_of_fields = len(additional_information_elements)
 
     if num_of_params != num_of_fields:
-        print "Customer creation error: Number of specified additional parameters(",num_of_params,") is not equal to the number of fields on the page(",num_of_fields,")"
-        exit(1)
+        message = "Customer creation error: Number of specified additional parameters(",num_of_params,") is not equal to the number of fields on the page(",num_of_fields,")"
+        raise message
     else:
         for i in {0, num_of_params-1}:
             additional_information_elements[i].send_keys(additional_parameters[i])
@@ -98,62 +99,90 @@ def create_customer(company_name, country_code, state, zip, additional_parameter
 
     return result
 
-def find_in_popup(field_element_id, value):
-#switch to popup here, as in Dasha
+def find_name_in_popup(field_element_id, value):
     fill_text_by_id(field_element_id, value)
-    click_id("_browse_search")
-#implement here the algorithm from Dasha
-# it should support cases with multiple found elements
+    click_id("_browse_search")  # search
+
+    #checking each found element for total match
+    i = 1
+    while True:
+        try:
+            line = driver.find_element_by_id("vel_t1_" + str(i))
+        except NoSuchElementException as ex:
+            print ex
+
+            if i == 1:  # search found no objects
+                #print "Nothing found"
+                return None
+
+
+        print "Something found, but ..."
+
+        if i == 3:
+            break
+        i += 1
+
+
+
+
 
 def place_order(customerID, planName, subdomain):
-    print "Placing order for customer with ID ",customerID,", purchasing plan '",planName,"'"
+    print "Placing order for customer #" + customerID + ", purchasing plan '" + planName + "'"
 
     win = driver.current_window_handle
 
-    switch_to_billing()
+    switch_panel("Billing")
 
-    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
+    driver.switch_to.window(win)  # otherwise selenium doesn't see the frame
     driver.switch_to.frame("leftFrame")
 
     click_id("click_orders")
 
-    driver.switch_to.window(win) # otherwise selenium doesn't see the frame
+    driver.switch_to.window(win)  # otherwise selenium doesn't see the frame
     driver.switch_to.frame("mainFrame")
     click_id("input___add")
 
     # filling fields
     fill_text_by_id("input___AccountAccountID",customerID)
     click_id("input___refPlan")
-    find_in_popup("filter_name", planName)
 
+    # switch to popup here, as in Dasha
+    driver.switch_to.window(driver.window_handles[1])
+    assert (driver.title == "Service Plans"), "Could not find Service Plans popup."
+
+    find_name_in_popup("filter_name", planName)
+
+    #driver.switch_to().window(win)  # switch back to parent window
+    #driver.switch_to.frame("mainFrame")
 ####################### MAIN ######################
 
 #=====================variables=======================
-#cpurl = "https://di.psteam.int.zone/cp"
-cpurl = "https://oap.psteam.int.zone/cp"
+cpurl = "https://di.psteam.int.zone/cp"
+#cpurl = "https://oap.psteam.int.zone/cp"
 username = "admin"
-#password = "123qweASD"
-password = "oap-psteam"
+password = "123qweASD"
+#password = "oap-psteam"
 
 country = "us" # must the one where the Provider can sell Office 365 services
 state = "AK" # if required
-additional_params = ["111111111"] # depends on what is requested on the installation
+#additional_params = ["111111111"] # depends on what is requested on the installation
 
 #=====================Actions=======================
 # Open browser
 #mydriver = webdriver.Firefox() - fails too often = finishes with exit code 0, but doesn't do anything
 driver = webdriver.Chrome(executable_path="..\chromedriver.exe")
-driver.implicitly_wait(10)
+driver.implicitly_wait(3)
 
 # Action 1
 login_to_cp(cpurl, username, password)
 
-#result = create_customer("Test Customer PS2", country, state, "12345", additional_params, "testps2", "123qweASD")
-result = "Account #1000020 has been created."
+#result = create_customer("Test Customer PS1", country, state, "12345", additional_params, "testps1", "123qweASD")
+result = "Account #1000006 has been created."
 message = str(result)
-if not message.endswith("has been created."):
-    exit(1)
+assert(message.endswith("has been created.")), "Looks like the account was not created."
+
 customerID = message.rstrip(" has been created.")
 customerID = customerID.strip("Account #")
-#place_order(customerID, "Office 365 Enterprise E1", "pstest1.onmicrosoft.com")
-place_order(customerID, "IIS Hosting", "pstest1.onmicrosoft.com")
+result = place_order(customerID, "Office 365 Enterprise E1", "pstest1.onmicrosoft.com")
+assert(result == "Order submitted"), "place_order() Could not find the plan for order creation."
+#place_order(customerID, "IIS Hosting", "pstest1.onmicrosoft.com")
