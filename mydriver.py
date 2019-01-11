@@ -64,13 +64,13 @@ class MyDriver:
                      print "Found something, but not exact match."
                      return None
             try:
-                #print line.text
-                found_name = line.find_element_by_xpath(".//a[contains(text(),'" + name + "')]")
+                debug("Line text:" + line.text)
+                found_name = line.find_element_by_xpath(".//td[contains(text(),'" + name + "')]") # in popup we search for td instead of a.
 
-                print "Name: " + name
-                print "Found name: " + found_name.text
+                debug("Name: " + name)
+                debug("Found name: " + found_name.text)
                 without_spaces = re.sub('\s+',' ', found_name.text)
-                print "text_without_spaces: " + without_spaces
+                debug("text_without_spaces: " + without_spaces)
                 if without_spaces == name:
                     print "Yes, it does."
                     return found_name

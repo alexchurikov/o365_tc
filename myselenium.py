@@ -95,9 +95,9 @@ class MySelenium:
         # filling fields
         # filling customer ID
         self.myDriver.fill_text_by_id("input___AccountAccountID",customerID)
-        self.myDriver.click_id("input___refPlan")
 
         # choosing plan
+        self.myDriver.click_id("input___refPlan")
         self.myDriver.driver.switch_to.window(self.myDriver.driver.window_handles[1])
         assert (self.myDriver.driver.title == "Service Plans"), "Could not find Service Plans popup."
 
@@ -105,10 +105,30 @@ class MySelenium:
         if plan==None:
             print "Order creation failed, plan '" + planName + "' was not found, exiting."
             return
-        #plan.click()
-        #__driver.switch_to.window(win)
+        plan.click()
+        self.myDriver.driver.switch_to.window(win)
+        self.myDriver.driver.switch_to.frame("mainFrame")
 
-        # choosing
+        # choosing period
+        self.myDriver.click_id("input___ct_refPlanPeriod")
+        self.myDriver.driver.switch_to.window(self.myDriver.driver.window_handles[1])
+        assert (self.myDriver.driver.title == "Subscription Periods"), "Could not find Subscription Periods popup."
+        period = self.myDriver.driver.find_element_by_id("vel_t1_1") # choosing the first line
+        period.click()
 
-        #__driver.switch_to().window(win)  # switch back to parent window
-        #__driver.switch_to.frame("mainFrame")
+        self.myDriver.driver.switch_to.window(win)
+        self.myDriver.driver.switch_to.frame("mainFrame")
+        self.myDriver.click_id("input___SaveAdd")
+
+        # next screen (parameters) - assuming there are no required parameters
+        self.myDriver.click_id("input___Next")
+
+        # select payment method
+        # Using default one for now
+        self.myDriver.click_id("input___SP_ViewPromoOrder")
+
+        result = self.myDriver.driver.find_element_by_id("opresult_id").find_element_by_class_name("msg-content").text
+        print "Order creation result:"
+        print result
+
+        return result
