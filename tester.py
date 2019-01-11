@@ -1,6 +1,6 @@
 #ScriptName : Login.py
 #---------------------
-from selenium_utils import *
+from myselenium import *
 
 #=====================variables=======================
 cpurl = "https://di.psteam.int.zone/cp"
@@ -10,12 +10,13 @@ password = "123qweASD"
 #password = "oap-psteam"
 
 country = "us" # must the one where the Provider can sell Office 365 services
-state = "AK" # if required
+state = "AK" # will be used if required
 #additional_params = ["111111111"] # depends on what is requested on the installation
 
+DELAY = 0.9 # Default value = 0.9. Increase it, if the panel is too slow for selenium to find some elements.
 #=====================Actions=======================
 # Open browser
-mySelenium = MySelenium()
+mySelenium = MySelenium(DELAY)
 
 # Action 1
 mySelenium.login_to_cp(cpurl, username, password)
