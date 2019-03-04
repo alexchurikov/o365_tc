@@ -1,3 +1,5 @@
+# High-level methods, OA/BA objects related
+
 from selenium import webdriver
 from time import sleep
 #import sys
@@ -20,12 +22,21 @@ class MySelenium:
         self.myDriver.click_xpath("//button[@name='login']")
         self.myDriver.driver.maximize_window()
 
+    def switch_panel(self, neededPanelName): # "Billing" or "Operations"
+        sleep(self.DELAY)
+
+        self.myDriver.driver.switch_to.frame("topFrame")
+        panelName = self.myDriver.driver.find_element_by_id("to_bm") #find <a> element
+
+        if panelName.text == neededPanelName:
+            panelName.click()
+
     def create_customer(self, company_name, country_code, state, zip, additional_parameters, login, password):
         print "Creating customer with name: ", company_name
 
         win = self.myDriver.driver.current_window_handle
 
-        self.myDriver.switch_panel("Billing")
+        self.switch_panel("Billing")
 
         self.myDriver.driver.switch_to.window(win) # otherwise selenium doesn't see the frame
         self.myDriver.driver.switch_to.frame("leftFrame")
@@ -51,17 +62,20 @@ class MySelenium:
         self.myDriver.click_id("input___Save")
 
         # Additional parameters
-        additional_information_elements = self.myDriver.driver.find_element_by_id('Additional Information').find_elements_by_tag_name("input")
+        numOfParams = len(additional_parameters)
+        # if some parameters are passed, verify that their number (numOfParams) matches the number of requeted parameters (numOfFields)
+        if numOfParams > 0:
+            additionalInformationElements = self.myDriver.driver.find_element_by_id('Additional Information').find_elements_by_tag_name("input")
+            numOfFields = len(additionalInformationElements)
 
-        num_of_params = len(additional_parameters)
-        num_of_fields = len(additional_information_elements)
+            if numOfParams != numOfFields:
+                message = "Customer creation error: Number of specified additional parameters(",numOfParams,") is not equal to the number of fields on the page(",num_of_fields,"). "
+                message = message + "SOLUTION: if there are no required parameters, remove all parameters in variables like this: additionalParams = []"
+                message = message + "Otherwise: additionalParams array should contain full list of parameters requested by the page."
+                raise message
 
-        if num_of_params != num_of_fields:
-            message = "Customer creation error: Number of specified additional parameters(",num_of_params,") is not equal to the number of fields on the page(",num_of_fields,")"
-            raise message
-        else:
-            for i in {0, num_of_params-1}:
-                additional_information_elements[i].send_keys(additional_parameters[i])
+            for i in {0, numOfParams-1}:
+                additionalInformationElements[i].send_keys(additional_parameters[i])
 
         self.myDriver.click_id("input___Next")
 
@@ -80,8 +94,9 @@ class MySelenium:
         print "Placing order for customer #" + customerID + ", purchasing plan '" + planName + "'"
 
         win = self.myDriver.driver.current_window_handle
+        self.myDriver.driver.switch_to.window(win) # otherwise selenium doesn't see the frame
 
-        self.myDriver.switch_panel("Billing")
+        self.switch_panel("Billing")
 
         self.myDriver.driver.switch_to.window(win)  # otherwise selenium doesn't see the frame
         self.myDriver.driver.switch_to.frame("leftFrame")
@@ -120,7 +135,9 @@ class MySelenium:
         self.myDriver.driver.switch_to.frame("mainFrame")
         self.myDriver.click_id("input___SaveAdd")
 
-        # next screen (parameters) - assuming there are no required parameters
+        # next screen (parameters)
+        self.myDriver.fill_text_by_id("input____aps_defaults_o365", subdomain) # filling .onmicrosoft.com sub-domain
+        # assuming there are no other required parameters
         self.myDriver.click_id("input___Next")
 
         # select payment method
@@ -132,3 +149,30 @@ class MySelenium:
         print result
 
         return result
+
+    def find_subscription_ID(self, orderID):
+        return 0
+
+    def process_order(self, orderID):
+        self.switch_panel("Billing")
+
+        # find order
+
+        # check status
+
+        # if New, open it.
+
+        # if Payment Method not Attached, pay order - create credit memo
+
+        orderStatus = "Completed"
+        if orderStatus == "Processed":
+            return find_subscription_ID(orderID)
+        else:
+            return -1
+
+    def find_oa_tasks(self, subscriptionID):
+        self.myDriver.switch_panel("Operations")
+
+    def check_subscription_tasks(self, subscriptionID): # returns array of failed task IDs (can be empty array)
+        while 1:
+            find_oa_tasks(subscriptionID)

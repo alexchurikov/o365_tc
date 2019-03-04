@@ -37,16 +37,8 @@ class MyDriver:
     def click_id(self, location):
         self.driver.find_element_by_id(location).click()
 
-    def switch_panel(self, needed_panel_name): # "Billing" or "Operations"
-        sleep(self.DELAY)
-        self.driver.switch_to.frame("topFrame")
-        panelName = self.driver.find_element_by_id("to_bm") #find <a> element
-
-        if panelName.text == needed_panel_name:
-            panelName.click()
-
-    def find_name_in_popup(self, field_element_id, name):
-        self.fill_text_by_id(field_element_id, name)
+    def find_name_in_popup(self, fieldElementID, name):
+        self.fill_text_by_id(fieldElementID, name)
         self.click_id("_browse_search")  # search
         sleep(self.DELAY)
 
@@ -58,10 +50,10 @@ class MyDriver:
                 line = self.driver.find_element_by_id("vel_t1_" + str(i))
             except NoSuchElementException as ex:
                 if i == 1:  # search found no objects
-                    print "Nothing found."
+                    debug("Nothing found.")
                     return None
                 else:
-                     print "Found something, but not exact match."
+                     debug("Found something, but not exact match.")
                      return None
             try:
                 debug("Line text:" + line.text)
@@ -72,7 +64,7 @@ class MyDriver:
                 without_spaces = re.sub('\s+',' ', found_name.text)
                 debug("text_without_spaces: " + without_spaces)
                 if without_spaces == name:
-                    print "Yes, it does."
+                    debug("Yes, it does.")
                     return found_name
             except NoSuchElementException as ex:
                 print "Something went wrong. Will skip the current plan. Report this exception to developer:"
